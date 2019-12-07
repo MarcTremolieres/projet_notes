@@ -421,7 +421,7 @@
     </widget>
     <widget class="QWidget" name="tab_5">
      <attribute name="title">
-      <string>Notes</string>
+      <string>notes</string>
      </attribute>
      <widget class="QComboBox" name="comboBox_5">
       <property name="geometry">
@@ -520,7 +520,7 @@
        <rect>
         <x>110</x>
         <y>230</y>
-        <width>113</width>
+        <width>41</width>
         <height>23</height>
        </rect>
       </property>
@@ -538,10 +538,64 @@
        <string>Note</string>
       </property>
      </widget>
+     <widget class="QPushButton" name="pushButton_2">
+      <property name="geometry">
+       <rect>
+        <x>170</x>
+        <y>230</y>
+        <width>80</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Modifier</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="lineEdit_4">
+      <property name="geometry">
+       <rect>
+        <x>310</x>
+        <y>180</y>
+        <width>113</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Date ?</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_3">
+      <property name="geometry">
+       <rect>
+        <x>450</x>
+        <y>180</y>
+        <width>80</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Ajouter</string>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="tab_6">
      <attribute name="title">
       <string>Statistiques</string>
+     </attribute>
+    </widget>
+    <widget class="QWidget" name="tab_7">
+     <attribute name="title">
+      <string>Eleve</string>
+     </attribute>
+    </widget>
+    <widget class="QWidget" name="tab_8">
+     <attribute name="title">
+      <string>Professeur</string>
+     </attribute>
+    </widget>
+    <widget class="QWidget" name="tab_9">
+     <attribute name="title">
+      <string>Administration</string>
      </attribute>
     </widget>
    </widget>
@@ -673,22 +727,6 @@
    </hints>
   </connection>
   <connection>
-   <sender>comboBox_7</sender>
-   <signal>currentTextChanged(QString)</signal>
-   <receiver>MainWindow</receiver>
-   <slot>update_note()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>172</x>
-     <y>192</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>174</x>
-     <y>528</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>comboBox_8</sender>
    <signal>currentTextChanged(QString)</signal>
    <receiver>MainWindow</receiver>
@@ -720,6 +758,38 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>pushButton_2</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>add_change_note()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>190</x>
+     <y>289</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>186</x>
+     <y>501</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_3</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>add_devoir()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>500</x>
+     <y>242</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>502</x>
+     <y>529</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>profs_par_discipline()</slot>
@@ -730,5 +800,7 @@
   <slot>notes_classes()</slot>
   <slot>update_note()</slot>
   <slot>update_devoirs()</slot>
+  <slot>add_change_note()</slot>
+  <slot>add_devoir()</slot>
  </slots>
 </ui>

@@ -98,15 +98,22 @@ class ApplicationIHM(QtWidgets.QMainWindow):
         self.fill_combobox_7()
         self.fill_combobox_8()
 
-    def fill_combobox_8(self):
+    def get_id_cours(self):
         index_cours1 = self.ui.comboBox_7.currentText()
-        id=''
+        id = ''
         for c in index_cours1:
             if c == ' ':
                 break
             else:
                 id += c
-        id_cours = int(id)
+        if id:
+            id_cours = int(id)
+        else:
+            id_cours = 0
+        return id_cours
+
+    def fill_combobox_8(self):
+        id_cours = self.get_id_cours()
         classe = self.ui.comboBox_5.currentText()
         con = pymysql.connect('localhost', 'kemar', '', 'projet_notes')
         cur = con.cursor()
@@ -119,20 +126,21 @@ class ApplicationIHM(QtWidgets.QMainWindow):
             item = f"{devoir[0]}  {devoir[1]}"
             self.ui.comboBox_8.insertItem(index, item)
 
-    def update_note(self):
+    def get_id_devoir(self):
         index_devoir_1 = self.ui.comboBox_8.currentText()
-        print(index_devoir_1)
         id = ''
         for c in index_devoir_1:
             if c == ' ':
                 break
             else:
                 id += c
-        print(id)
         if id != '':
             id_devoir = int(id)
         else:
             id_devoir = 0
+        return id_devoir
+
+    def get_eleve_nom(self):
         eleve1 = self.ui.comboBox_6.currentText()
         eleve = ''
         for c in eleve1:
@@ -140,21 +148,111 @@ class ApplicationIHM(QtWidgets.QMainWindow):
                 break
             else:
                 eleve += c
+        return eleve
+
+    def get_id_eleve(self):
+        eleve1 = self.ui.comboBox_6.currentText()
+        eleve = ''
+        for c in eleve1:
+            if c == ' ':
+                break
+            else:
+                eleve += c
+        id_eleve = int(eleve)
+        return id_eleve
+
+
+
+    def get_single_note(self):
+        id_devoir = self.get_id_devoir()
+        eleve = self.get_eleve_nom()
 
         con = pymysql.connect('localhost', 'kemar', '', 'projet_notes')
         cur = con.cursor()
         cur.execute(f"select id_eleve from eleves where nom = '{eleve}'")
         resultat = cur.fetchall()
-        print(resultat)
-        id_eleve = resultat[0][0]
-        requete = f"select note from notes where id_eleve = '{id_eleve}' and id_devoir = {id_devoir}"
+        if resultat:
+            id_eleve = resultat[0][0]
+        else:
+            id_eleve = 0
+
+        requete = f"select note, id_note from notes where id_eleve = '{id_eleve}' " \
+                  f"and id_devoir = {id_devoir}"
         cur.execute(requete)
         note = cur.fetchall()
-        if note:
-            self.ui.lineEdit_3.setText(str(note[0][0]))
+        cur.close()
+        if (note == ()):
+            return None
+        else:
+            return note[0][0], note[0][1]
+
+    def update_note(self):
+        note = self.get_single_note()
+        if (note == None):
+            affichage = ''
+        else:
+            affichage = str(note[0])
+
+        self.ui.lineEdit_3.setText(affichage)
+
+    def add_change_note(self):
+        print("gtrt")
+        note = self.get_single_note()
+        print(note)
+        if note == None:
+            self.add_single_note()
+        else:
+            self.update_single_note()
+
+    def update_single_note(self):
+        nouvelle_note = int(self.ui.lineEdit_3.text())
+        print("nouvelle note ", nouvelle_note)
+        ancienne_note = self.get_single_note()
+        if ancienne_note != None:
+            ancienne_note_id = ancienne_note[1]
+        else:
+            ancienne_note_id = 0
+        con = pymysql.connect('localhost', 'kemar', '', 'projet_notes')
+        cur = con.cursor()
+        request = f"update notes set note = {nouvelle_note} where id_note = {ancienne_note_id}"
+        cur.execute(request)
+        print(cur.fetchall())
+        con.commit()
+        con.close()
+
+
+    def add_single_note(self):
+        print("new note")
+        nouvelle_note = int(self.ui.lineEdit_3.text())
+        id_devoir = self.get_id_devoir()
+        id_eleve = self.get_id_eleve()
+        print(f"id_eleve {id_eleve}  id_devoir {id_devoir}")
+        if id_eleve and id_devoir:
+            requete = f"insert into notes (  id_eleve, id_devoir, note) values ({id_eleve}, " \
+                      f"{id_devoir}, {nouvelle_note})"
+            con = pymysql.connect('localhost', 'kemar', '', 'projet_notes')
+            cur = con.cursor()
+            print(requete)
+            cur.execute(requete)
+            con.commit()
+            con.close()
+
+    def add_devoir(self):
+        date = self.ui.lineEdit_4.text()
+        print(date)
+        id_cours = self.get_id_cours()
+        con = pymysql.connect('localhost', 'kemar', '', 'projet_notes')
+        cur = con.cursor()
+        requete = f"insert into devoirs (id_cours, date, description) " \
+                  f"values ({id_cours}, '{date}', '')"
+        print(requete)
+        cur.execute(requete)
+        con.commit()
+        cur.close()
 
     def update_devoirs(self):
-        self.fill_combobox()
+        self.fill_combobox_8()
+        self.update_note()
 
     def fill_combobox_5(self):
         requete = "select Classe from classes"
@@ -175,7 +273,13 @@ class ApplicationIHM(QtWidgets.QMainWindow):
         id_notes = f"select id_note from notes where id_eleve in ({id_eleve})"
         con = pymysql.connect('localhost', 'kemar', '', 'projet_notes')
         cur = con.cursor()
-        requete = f"SELECT notes.note, disciplines.nom, profs.nom FROM notes, disciplines, profs, devoirs, cours where notes.id_note in ({id_notes}) and notes.id_devoir = devoirs.id_devoir and devoirs.id_cours = cours.id_cours and cours.id_prof = profs.id_prof and cours.id_discipline = disciplines.id_discipline"
+        requete = f"SELECT notes.note, disciplines.nom, profs.nom FROM " \
+                  f"notes, disciplines, profs, devoirs, cours where " \
+                  f"notes.id_note in ({id_notes}) " \
+                  f"and notes.id_devoir = devoirs.id_devoir " \
+                  f"and devoirs.id_cours = cours.id_cours " \
+                  f"and cours.id_prof = profs.id_prof " \
+                  f"and cours.id_discipline = disciplines.id_discipline"
         cur.execute(requete)
         notes = cur.fetchall()
         self.ui.listWidget_9.clear()
@@ -190,7 +294,10 @@ class ApplicationIHM(QtWidgets.QMainWindow):
         cur = con.cursor()
         id_classe = f"select id_classe from eleves where nom = '{eleve}'"
         id_cours = f"select id_cours from cours where id_classe in ({id_classe})"
-        requete = f"select disciplines.nom, profs.nom from disciplines, profs, cours where cours.id_cours in ({id_cours}) and disciplines.id_discipline = cours.id_discipline and cours.id_prof = profs.id_prof"
+        requete = f"select disciplines.nom, profs.nom from disciplines, profs, cours where" \
+                  f" cours.id_cours in ({id_cours}) " \
+                  f"and disciplines.id_discipline = cours.id_discipline " \
+                  f"and cours.id_prof = profs.id_prof"
         cur.execute(requete)
         cours = cur.fetchall()
         self.ui.listWidget_8.clear()
@@ -251,13 +358,13 @@ class ApplicationIHM(QtWidgets.QMainWindow):
         con = pymysql.connect('localhost', 'kemar', '', 'projet_notes')
         cur = con.cursor()
         id_classe = f"select id_classe from classes where Classe = '{classe}'"
-        requete = f"select nom, prenom from eleves where id_classe in ({id_classe})"
+        requete = f"select id_eleve, nom, prenom from eleves where id_classe in ({id_classe})"
         cur.execute(requete)
         eleves = cur.fetchall()
         self.ui.comboBox_6.clear()
         index = 1
         for eleve in eleves:
-            item = eleve[0]+"  "+ eleve[1]
+            item = str(eleve[0]) + " " + eleve[1] +"  " + eleve[2]
             self.ui.comboBox_6.insertItem(index, item)
             index += 1
         con.close()
@@ -267,7 +374,10 @@ class ApplicationIHM(QtWidgets.QMainWindow):
         con = pymysql.connect('localhost', 'kemar', '', 'projet_notes')
         cur = con.cursor()
         id_classe = f"select id_classe from classes where Classe = '{classe}'"
-        requete = f"select cours.id_cours, disciplines.nom, profs.nom from disciplines, profs, cours where cours.id_classe in ({id_classe}) and disciplines.id_discipline = cours.id_discipline and profs.id_prof = cours.id_prof"
+        requete = f"select cours.id_cours, disciplines.nom, profs.nom " \
+                  f"from disciplines, profs, cours where cours.id_classe in ({id_classe}) " \
+                  f"and disciplines.id_discipline = cours.id_discipline " \
+                  f"and profs.id_prof = cours.id_prof"
         cur.execute(requete)
         cours = cur.fetchall()
         self.ui.comboBox_7.clear()
@@ -284,7 +394,8 @@ class ApplicationIHM(QtWidgets.QMainWindow):
         prof = self.ui.comboBox_2.currentText()
         id_profs = f"select id_prof from profs where nom ='{prof}'"
         id_cours = f"select id_cours from cours where id_prof in ({id_profs})"
-        description = f"select id_classe, id_discipline from cours where id_cours in ({id_cours})"
+        description = f"select id_classe, id_discipline from cours " \
+                      f"where id_cours in ({id_cours})"
         cur.execute(description)
         cours = cur.fetchall()
         self.ui.listWidget_4.clear()
@@ -331,9 +442,7 @@ class ApplicationIHM(QtWidgets.QMainWindow):
         con = pymysql.connect('localhost', 'kemar', '', 'projet_notes')
         cur = con.cursor()
         discipline = self.ui.comboBox.currentText()
-        print(discipline)
         requete = 'SELECT id_discipline FROM disciplines WHERE nom = "'+discipline+'"'
-        print(requete)
         cur.execute(requete)
         resultat = cur.fetchall()
         if resultat:
